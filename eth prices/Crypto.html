@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ethereum Gas Prices</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const web3 = new Web3('https://mainnet.infura.io/v3/c0adfd96fd4048338028f7e77936e6a4');
+            const table = document.getElementById('gasPrices');
+
+            // Retrieve the current gas prices from the network
+            web3.eth.getGasPrice()
+                .then((gasPrice) => {
+                    // Retrieve the current ETH/USD price from a cryptocurrency price API
+                    axios.get('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
+                        .then((response) => {
+                            const ethUsdPrice = response.data.ethereum.usd;
+
+                            // Calculate the gas prices for slow, fast, and extra fast transactions
+                            const slowGasPrice = Math.round(gasPrice * 0.5 / 1e9); // 50% of current gas price in Gwei
+                            const fastGasPrice = Math.round(gasPrice * 1.5 / 1e9); // 150% of current gas price in Gwei
+                            const extraFastGasPrice = Math.round(gasPrice * 2 / 1e9); // 200% of current gas price in Gwei
+
+                            // Convert the gas prices from Wei to USD
+                            const slowGasPriceUsd = web3.utils.fromWei(String(slowGasPrice * 1e9), 'ether') * ethUsdPrice;
+                            const fastGasPriceUsd = web3.utils.fromWei(String(fastGasPrice * 1e9), 'ether') * ethUsdPrice;
+                            const extraFastGasPriceUsd = web3.utils.fromWei(String(extraFastGasPrice * 1e9), 'ether') * ethUsdPrice;
+
+                            // Display the results in a table
+                            table.innerHTML = `
+                             <tr>
+                                <th>Gas speed</th>
+                                <th>Gas price (Gwei)</th>
+                                <th>Gas price (USD)</th>
+                             </tr>
+                             <tr>
+                                <td>Slow 🐌</td>
+                                <td>${slowGasPrice}</td>
+                                <td>${slowGasPriceUsd.toFixed(5)}</td>
+                             </tr>
+                             <tr>
+                                <td>Fast 💨</td>
+                                <td>${fastGasPrice}</td>
+                                <td>${fastGasPriceUsd.toFixed(5)}</td>
+                             </tr>
+                             <tr>
+                                <td>Extra fast 🚀</td>
+                                <td>${extraFastGasPrice}</td>
+                                <td>${extraFastGasPriceUsd.toFixed(5)}</td>
+                             </tr>
+                            `;
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        });
+
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="backdrop">Ethereum Gas Prices</h1>
+        <table id="gasPrices" class="table-align"></table>
+    </div>
+</body>
+
+</html>
